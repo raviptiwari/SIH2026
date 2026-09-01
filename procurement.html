@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Procurement Centre — Mandi Queue</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-auth-role="procurement">
+
+<div class="topbar">
+  <a class="brand" href="index.html"><span class="mark">🌾</span> <span data-i18n="brand">MandiSathi</span></a>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <span class="role-pill" data-i18n="procurement-role">🏪 Procurement Centre</span>
+    <select id="lang-selector" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-family:inherit; cursor:pointer;">
+      <option value="en">English</option>
+      <option value="hi">हिंदी</option>
+    </select>
+    <span id="user-info" class="hidden" style="font-size:0.9rem; color:var(--ink-soft);"></span>
+    <button id="logout-btn" class="btn btn-outline hidden" style="padding:6px 12px; font-size:0.9rem;" onclick="handleLogout()" data-i18n="logout-btn">Logout</button>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="hidden">
+  <div class="container" style="padding-top:60px; padding-bottom:60px; max-width:400px;">
+    <div class="card">
+      <h1 style="text-align:center; margin-bottom:24px;" data-i18n="login-title">Login</h1>
+      <div class="field">
+        <label for="login-username" data-i18n="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="procurement" data-i18n="login-username">
+      </div>
+      <div class="field">
+        <label for="login-password" data-i18n="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••">
+      </div>
+      <div id="login-error" class="hint" style="color:var(--red); margin-bottom:12px;"></div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="handleLogin('procurement')" data-i18n="login-btn">Login</button>
+      <p style="text-align:center; font-size:0.85rem; color:var(--ink-soft); margin-top:16px;">Demo credentials: procurement / procurement123</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content" data-content="main">
+<div class="container" style="padding-top:28px; padding-bottom:60px;">
+
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+    <div>
+      <h1 style="font-size:1.6rem;" data-i18n="today-queue">Today's queue</h1>
+      <p style="margin:0;" data-i18n="centre-desc">Check in farmers, call tokens, and mark procurements complete.</p>
+    </div>
+    <select id="centre-select" style="max-width:280px;"></select>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card-flat stat-block"><div class="num" id="s-total">0</div><div class="lbl" data-i18n="total-booked">Total bookings today</div></div>
+    <div class="card-flat stat-block"><div class="num" id="s-checkedin">0</div><div class="lbl" data-i18n="checked-in">Checked in</div></div>
+    <div class="card-flat stat-block"><div class="num" id="s-completed">0</div><div class="lbl" data-i18n="completed">Completed</div></div>
+    <div class="card-flat stat-block"><div class="num" id="s-waiting">0</div><div class="lbl">Waiting</div></div>
+  </div>
+
+  <div class="two-col" style="margin-bottom:28px;">
+    <div class="card" style="text-align:center;">
+      <div class="token-label">CURRENTLY SERVING</div>
+      <div class="token-number" id="p-serving">#0</div>
+      <button class="btn btn-primary btn-lg" style="margin-top:16px;" onclick="handleCallNext()" data-i18n="call-token">📣 Call next farmer</button>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:10px;" data-i18n="checkin-btn">Check in by booking ID</h3>
+      <div class="field" style="margin-bottom:10px;">
+        <input id="checkin-input" type="text" placeholder="e.g. P26032-1042">
+      </div>
+      <button class="btn btn-teal btn-block" onclick="handleCheckIn()" data-i18n="checkin-btn">Check in farmer</button>
+      <div id="checkin-msg" class="hint" style="margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:14px;" data-i18n="token">Queue list</h3>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th data-i18n="token">Token</th><th data-i18n="farmer-name">Farmer</th><th>Crop / Qty</th><th>Slot</th><th data-i18n="status">Status</th><th></th></tr>
+        </thead>
+        <tbody id="queue-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="translations.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="procurement.js"></script>
+<script>
+  function handleLogin(role) {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    
+    if (!username || !password) {
+      errorEl.textContent = t('error-fill-fields');
+      return;
+    }
+    
+    const result = login(username, password, role);
+    if (result.success) {
+      location.reload();
+    } else {
+      errorEl.textContent = result.error;
+      document.getElementById('login-password').value = '';
+    }
+  }
+  
+  function handleLogout() {
+    logout();
+    location.reload();
+  }
+  
+  function updateUserInfo() {
+    const user = getCurrentUser();
+    const userInfoEl = document.getElementById('user-info');
+    const logoutBtnEl = document.getElementById('logout-btn');
+    if (user) {
+      userInfoEl.textContent = t('logged-in-as') + ' ' + user.username;
+      userInfoEl.classList.remove('hidden');
+      logoutBtnEl.classList.remove('hidden');
+    } else {
+      userInfoEl.classList.add('hidden');
+      logoutBtnEl.classList.add('hidden');
+    }
+  }
+  
+  // Allow Enter key to submit login
+  document.addEventListener('DOMContentLoaded', () => {
+    updateUserInfo();
+    document.getElementById('login-password')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin('procurement');
+    });
+  });
+</script>
+</body>
+</html>

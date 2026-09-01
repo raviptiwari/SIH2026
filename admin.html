@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Mandi Queue</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-auth-role="admin">
+
+<div class="topbar">
+  <a class="brand" href="index.html"><span class="mark">🌾</span> <span data-i18n="brand">MandiSathi</span></a>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <span class="role-pill gold" data-i18n="admin-role">📊 Admin</span>
+    <select id="lang-selector" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-family:inherit; cursor:pointer;">
+      <option value="en">English</option>
+      <option value="hi">हिंदी</option>
+    </select>
+    <span id="user-info" class="hidden" style="font-size:0.9rem; color:var(--ink-soft);"></span>
+    <button id="logout-btn" class="btn btn-outline hidden" style="padding:6px 12px; font-size:0.9rem;" onclick="handleLogout()" data-i18n="logout-btn">Logout</button>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="screen-login" class="hidden">
+  <div class="container" style="padding-top:60px; padding-bottom:60px; max-width:400px;">
+    <div class="card">
+      <h1 style="text-align:center; margin-bottom:24px;" data-i18n="login-title">Login</h1>
+      <div class="field">
+        <label for="login-username" data-i18n="login-username">Username</label>
+        <input id="login-username" type="text" placeholder="admin" data-i18n="login-username">
+      </div>
+      <div class="field">
+        <label for="login-password" data-i18n="login-password">Password</label>
+        <input id="login-password" type="password" placeholder="••••••••">
+      </div>
+      <div id="login-error" class="hint" style="color:var(--red); margin-bottom:12px;"></div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="handleLogin('admin')" data-i18n="login-btn">Login</button>
+      <p style="text-align:center; font-size:0.85rem; color:var(--ink-soft); margin-top:16px;">Demo credentials: admin / admin123</p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content" data-content="main">
+<div class="container" style="padding-top:28px; padding-bottom:60px;">
+  <h1 style="font-size:1.6rem;" data-i18n="admin-dashboard">Procurement admin</h1>
+  <p style="margin-bottom:24px;" data-i18n="admin-desc">Today's numbers across every centre.</p>
+
+  <div class="dashboard-grid">
+    <div class="card-flat stat-block"><div class="num" id="a-total">0</div><div class="lbl" data-i18n="total-booked">Today's farmers</div></div>
+    <div class="card-flat stat-block"><div class="num" id="a-completed">0</div><div class="lbl" data-i18n="completed">Completed</div></div>
+    <div class="card-flat stat-block"><div class="num" id="a-waiting">0</div><div class="lbl">Waiting</div></div>
+    <div class="card-flat stat-block"><div class="num" id="a-pending">0</div><div class="lbl">Pending payment</div></div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3 style="margin-bottom:6px;" data-i18n="wait-time">Average waiting time</h3>
+      <div class="token-display" style="padding:8px 0;">
+        <div class="token-number" id="a-avgwait" style="font-size:2.8rem;">0m</div>
+        <div class="token-label">across all centres today</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-bottom:14px;" data-i18n="centre-stats">Centre performance</h3>
+      <div id="centre-perf-list"></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script src="translations.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="admin.js"></script>
+<script>
+  function handleLogin(role) {
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('login-error');
+    
+    if (!username || !password) {
+      errorEl.textContent = t('error-fill-fields');
+      return;
+    }
+    
+    const result = login(username, password, role);
+    if (result.success) {
+      location.reload();
+    } else {
+      errorEl.textContent = result.error;
+      document.getElementById('login-password').value = '';
+    }
+  }
+  
+  function handleLogout() {
+    logout();
+    location.reload();
+  }
+  
+  function updateUserInfo() {
+    const user = getCurrentUser();
+    const userInfoEl = document.getElementById('user-info');
+    const logoutBtnEl = document.getElementById('logout-btn');
+    if (user) {
+      userInfoEl.textContent = t('logged-in-as') + ' ' + user.username;
+      userInfoEl.classList.remove('hidden');
+      logoutBtnEl.classList.remove('hidden');
+    } else {
+      userInfoEl.classList.add('hidden');
+      logoutBtnEl.classList.add('hidden');
+    }
+  }
+  
+  // Allow Enter key to submit login
+  document.addEventListener('DOMContentLoaded', () => {
+    updateUserInfo();
+    document.getElementById('login-password')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleLogin('admin');
+    });
+  });
+</script>
+</body>
+</html>

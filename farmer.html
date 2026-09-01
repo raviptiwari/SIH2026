@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmer Portal — Mandi Queue</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body data-auth-role="farmer">
+
+<div class="topbar">
+  <a class="brand" href="index.html"><span class="mark">🌾</span> <span data-i18n="brand">MandiSathi</span></a>
+  <div style="display:flex; align-items:center; gap:16px;">
+    <span class="role-pill green" data-i18n="farmer-role">👨‍🌾 Farmer</span>
+    <select id="lang-selector" style="padding:6px 10px; border:1px solid #ddd; border-radius:4px; font-family:inherit; cursor:pointer;">
+      <option value="en">English</option>
+      <option value="hi">हिंदी</option>
+    </select>
+    <span id="user-info" class="hidden" style="font-size:0.9rem; color:var(--ink-soft);"></span>
+    <button id="logout-btn" class="btn btn-outline hidden" style="padding:6px 12px; font-size:0.9rem;" onclick="handleLogout()" data-i18n="logout-btn">Logout</button>
+  </div>
+</div>
+
+<!-- AUTH SCREEN (Login/Register) -->
+<div id="screen-auth" class="hidden">
+  <div class="container-narrow" style="padding-top:40px; padding-bottom:60px;">
+    <!-- Login Form -->
+    <div id="form-login">
+      <div class="card">
+        <h1 style="text-align:center; margin-bottom:24px;" data-i18n="login-title">Login</h1>
+        <div class="field">
+          <label for="login-mobile" data-i18n="register-mobile">Mobile number</label>
+          <input id="login-mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" data-i18n="register-mobile">
+        </div>
+        <div class="field">
+          <label for="login-pass" data-i18n="login-password">Password</label>
+          <input id="login-pass" type="password" placeholder="••••••••">
+        </div>
+        <div id="login-error" class="hint" style="color:var(--red); margin-bottom:12px;"></div>
+        <button class="btn btn-primary btn-block btn-lg" onclick="handleFarmerLogin()" data-i18n="login-btn">Login</button>
+        <p style="text-align:center; margin-top:16px;">
+          <a href="#" onclick="toggleAuthForm(); return false;" style="color:var(--teal); text-decoration:none;" data-i18n="register-link">Don't have an account? Register</a>
+        </p>
+      </div>
+    </div>
+
+    <!-- Register Form (hidden by default) -->
+    <div id="form-register" class="hidden">
+      <div class="card">
+        <h1 style="text-align:center; margin-bottom:12px;" data-i18n="register-title">Register</h1>
+        <p style="text-align:center; margin-bottom:20px; font-size:0.95rem;" data-i18n="register-desc">Create an account to book slots and track your bookings</p>
+        
+        <!-- Account Details -->
+        <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);">
+          <h3 style="margin-bottom:12px; font-size:1rem; color:var(--ink);">Account Details</h3>
+          <div class="field">
+            <label for="reg-mobile" data-i18n="register-mobile">Mobile number</label>
+            <input id="reg-mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" data-i18n="register-mobile">
+          </div>
+          <div class="field">
+            <label for="reg-pass" data-i18n="register-password">Password</label>
+            <input id="reg-pass" type="password" placeholder="••••••••">
+          </div>
+          <div class="field">
+            <label for="reg-pass-confirm" data-i18n="register-confirm-password">Confirm password</label>
+            <input id="reg-pass-confirm" type="password" placeholder="••••••••">
+          </div>
+        </div>
+
+        <!-- Personal Details -->
+        <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);">
+          <h3 style="margin-bottom:12px; font-size:1rem; color:var(--ink);">Personal Details</h3>
+          <div class="field">
+            <label for="reg-name" data-i18n="register-farmer-name">Full name</label>
+            <input id="reg-name" type="text" data-i18n="register-farmer-name-placeholder" placeholder="e.g. Rajesh Kumar">
+          </div>
+          <div class="field">
+            <label for="reg-farmer-id" data-i18n="register-farmer-id">Farmer ID (optional)</label>
+            <input id="reg-farmer-id" type="text" data-i18n="register-farmer-id-placeholder" placeholder="e.g. FID-2031">
+          </div>
+        </div>
+
+        <!-- Address Details -->
+        <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);">
+          <h3 style="margin-bottom:12px; font-size:1rem; color:var(--ink);">Address Details</h3>
+          <div class="field">
+            <label for="reg-village" data-i18n="register-village">Village name</label>
+            <input id="reg-village" type="text" data-i18n="register-village-placeholder" placeholder="e.g. Rajapur">
+          </div>
+          <div class="field">
+            <label for="reg-district" data-i18n="register-district">District</label>
+            <input id="reg-district" type="text" data-i18n="register-district-placeholder" placeholder="e.g. Meerut">
+          </div>
+          <div class="field">
+            <label for="reg-state" data-i18n="register-state">State</label>
+            <input id="reg-state" type="text" data-i18n="register-state-placeholder" placeholder="e.g. Uttar Pradesh">
+          </div>
+          <div class="field">
+            <label for="reg-pincode" data-i18n="register-pincode">Pincode</label>
+            <input id="reg-pincode" type="text" inputmode="numeric" maxlength="6" data-i18n="register-pincode-placeholder" placeholder="6-digit pincode">
+          </div>
+        </div>
+
+        <!-- Land Details -->
+        <div style="margin-bottom:20px;">
+          <h3 style="margin-bottom:12px; font-size:1rem; color:var(--ink);">Land Details</h3>
+          <div class="field">
+            <label for="reg-land-size" data-i18n="register-land-size">Land size (in acres)</label>
+            <input id="reg-land-size" type="number" step="0.1" min="0" data-i18n="register-land-size-placeholder" placeholder="e.g. 5.5">
+          </div>
+          <div class="field">
+            <label for="reg-land-type" data-i18n="register-land-type">Type of land</label>
+            <input id="reg-land-type" type="text" data-i18n="register-land-type-placeholder" placeholder="e.g. Agricultural">
+          </div>
+          <div class="field">
+            <label for="reg-primary-crop" data-i18n="register-primary-crop">Primary crop</label>
+            <input id="reg-primary-crop" type="text" data-i18n="register-primary-crop-placeholder" placeholder="e.g. Wheat">
+          </div>
+        </div>
+
+        <div id="register-error" class="hint" style="color:var(--red); margin-bottom:12px;"></div>
+        <button class="btn btn-primary btn-block btn-lg" onclick="handleFarmerRegister()" data-i18n="register-btn">Register</button>
+        <p style="text-align:center; margin-top:16px;">
+          <a href="#" onclick="toggleAuthForm(); return false;" style="color:var(--teal); text-decoration:none;" data-i18n="login-link">Already have an account? Login</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="main-content" data-content="main">
+<div class="container-narrow" style="padding-top:32px; padding-bottom:60px;">
+
+  <!-- START -->
+  <div id="screen-start">
+    <h1 style="font-size:1.7rem;" data-i18n="welcome-farmer">Welcome, farmer</h1>
+    <p data-i18n="start-desc">Start a new booking, or track a booking you already made.</p>
+    <div style="display:flex; flex-direction:column; gap:12px; margin-top:20px;">
+      <button class="btn btn-primary btn-lg" onclick="goTo('register')" data-i18n="book-slot">📅 Book a new slot</button>
+      <button class="btn btn-outline btn-lg" onclick="goTo('lookup')" data-i18n="track-booking">🔍 Track my booking</button>
+    </div>
+  </div>
+
+  <!-- LOOKUP -->
+  <div id="screen-lookup" class="hidden">
+    <button class="btn btn-outline" style="margin-bottom:18px;" onclick="goTo('start')" data-i18n="back">← Back</button>
+    <h2 data-i18n="find-booking">Find your booking</h2>
+    <p data-i18n="find-desc">Enter the mobile number you used to register.</p>
+    <div class="field">
+      <label for="lookup-mobile" data-i18n="mobile-label">Mobile number</label>
+      <input id="lookup-mobile" type="tel" inputmode="numeric" maxlength="10" data-i18n="mobile-placeholder" placeholder="10-digit mobile number">
+    </div>
+    <button class="btn btn-teal btn-block btn-lg" onclick="doLookup()" data-i18n="find-btn">Find bookings</button>
+    <div id="lookup-results" style="margin-top:20px;"></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="screen-register" class="hidden">
+    <button class="btn btn-outline" style="margin-bottom:18px;" onclick="goTo('start')" data-i18n="back">← Back</button>
+    <div class="step-track">
+      <div class="step-dot active">1</div><div class="step-line"></div>
+      <div class="step-dot">2</div><div class="step-line"></div>
+      <div class="step-dot">3</div>
+    </div>
+    <h2 data-i18n="your-details">Your details</h2>
+    <div class="card">
+      <div class="field"><label for="f-name" data-i18n="name-label">Full name</label><input id="f-name" type="text" data-i18n="name-placeholder" placeholder="e.g. Ramesh Yadav"></div>
+      <div class="field"><label for="f-mobile" data-i18n="mobile-label">Mobile number</label><input id="f-mobile" type="tel" inputmode="numeric" maxlength="10" data-i18n="mobile-placeholder" placeholder="10-digit mobile number"></div>
+      <div class="field"><label for="f-farmerid" data-i18n="farmerid-label">Farmer ID</label><input id="f-farmerid" type="text" data-i18n="farmerid-placeholder" placeholder="e.g. FID-2031"></div>
+      <div class="field"><label for="f-village" data-i18n="village-label">Village</label><input id="f-village" type="text" data-i18n="village-placeholder" placeholder="e.g. Rajapur"></div>
+      <div class="field"><label for="f-crop" data-i18n="crop-label">Crop</label>
+        <select id="f-crop">
+          <option value="" data-i18n="crop-select">Select crop</option>
+          <option>Wheat</option><option>Paddy</option><option>Maize</option><option>Mustard</option><option>Gram</option><option>Soybean</option>
+        </select>
+      </div>
+      <div class="field"><label for="f-qty" data-i18n="qty-label">Quantity (quintals)</label><input id="f-qty" type="number" min="1" data-i18n="qty-placeholder" placeholder="e.g. 40"></div>
+      <div class="field"><label for="f-centre" data-i18n="centre-label">Procurement centre</label>
+        <select id="f-centre"></select>
+      </div>
+      <div id="register-error" class="hint" style="color:var(--red);"></div>
+      <button class="btn btn-primary btn-block btn-lg" onclick="submitRegister()" data-i18n="continue-btn">Continue to slot booking →</button>
+    </div>
+  </div>
+
+  <!-- SLOT BOOKING -->
+  <div id="screen-slot" class="hidden">
+    <button class="btn btn-outline" style="margin-bottom:18px;" onclick="goTo('register')" data-i18n="back">← Back</button>
+    <div class="step-track">
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot active">2</div><div class="step-line"></div>
+      <div class="step-dot">3</div>
+    </div>
+    <h2 id="slot-centre-name" data-i18n="choose-slot">Choose a slot</h2>
+    <div id="date-tabs" style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;"></div>
+    <div id="slot-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+  </div>
+
+  <!-- CONFIRMATION -->
+  <div id="screen-confirm" class="hidden">
+    <div class="step-track">
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot done">✓</div><div class="step-line done"></div>
+      <div class="step-dot active">3</div>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="chip chip-green" style="margin-bottom:14px;" data-i18n="slot-booked">✅ Slot booked</div>
+      <h2 id="confirm-booking-id">P26032-0000</h2>
+      <p id="confirm-detail">—</p>
+      <div class="qr-box" id="confirm-qr" data-code=""></div>
+      <p class="hint" data-i18n="qr-hint">Show this at check-in — the centre can scan it or type your booking ID.</p>
+      <button class="btn btn-primary btn-block btn-lg" style="margin-top:10px;" onclick="showQueueScreen(currentBookingId)" data-i18n="track-queue">📱 Track my queue →</button>
+    </div>
+  </div>
+
+  <!-- QUEUE / STATUS -->
+  <div id="screen-queue" class="hidden">
+    <button class="btn btn-outline" style="margin-bottom:18px;" onclick="goTo('start')">← Home</button>
+    <div class="card" style="margin-bottom:18px;">
+      <div class="token-display">
+        <div class="token-label">YOUR TOKEN</div>
+        <div class="token-number" id="q-token">#0</div>
+      </div>
+      <div class="dashboard-grid" style="grid-template-columns:repeat(3,1fr); margin-bottom:0;">
+        <div class="stat-block"><div class="num" id="q-serving">0</div><div class="lbl">Currently serving</div></div>
+        <div class="stat-block"><div class="num" id="q-ahead">0</div><div class="lbl">People ahead</div></div>
+        <div class="stat-block"><div class="num" id="q-eta">0m</div><div class="lbl">Estimated wait</div></div>
+      </div>
+      <div style="text-align:center; margin-top:18px;">
+        <span class="chip chip-amber" id="q-status-chip">🟡 Waiting</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:14px;">Procurement status</h3>
+      <p class="hint" id="q-booking-meta" style="margin-bottom:14px;">—</p>
+      <ul class="timeline" id="q-timeline"></ul>
+      <div id="q-payment-box" class="hidden" style="margin-top:16px; text-align:center; padding:16px; border-radius:12px; background:var(--green-tint);">
+        <div style="font-weight:800; color:var(--green); font-size:1.15rem;" id="q-payment-amount">₹0</div>
+        <div class="hint">Payment credited</div>
+      </div>
+    </div>
+    <p class="hint" style="text-align:center; margin-top:14px;">This page updates automatically. Booking ID: <strong id="q-bid-footer"></strong></p>
+  </div>
+
+</div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<script src="translations.js"></script>
+<script src="auth.js"></script>
+<script src="data.js"></script>
+<script src="farmer.js"></script>
+<script>
+  function toggleAuthForm() {
+    document.getElementById('form-login').classList.toggle('hidden');
+    document.getElementById('form-register').classList.toggle('hidden');
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('register-error').textContent = '';
+  }
+  
+  function handleFarmerLogin() {
+    const mobile = document.getElementById('login-mobile').value.trim();
+    const password = document.getElementById('login-pass').value;
+    const errorEl = document.getElementById('login-error');
+    
+    if (!mobile || !password) {
+      errorEl.textContent = t('error-fill-fields');
+      return;
+    }
+    
+    const result = loginFarmer(mobile, password);
+    if (result.success) {
+      location.reload();
+    } else {
+      errorEl.textContent = result.error;
+      document.getElementById('login-pass').value = '';
+    }
+  }
+  
+  function handleFarmerRegister() {
+    const mobile = document.getElementById('reg-mobile').value.trim();
+    const password = document.getElementById('reg-pass').value;
+    const confirmPass = document.getElementById('reg-pass-confirm').value;
+    const errorEl = document.getElementById('register-error');
+    
+    if (!mobile || !password || !confirmPass) {
+      errorEl.textContent = t('error-fill-fields');
+      return;
+    }
+    
+    if (password !== confirmPass) {
+      errorEl.textContent = t('password-mismatch');
+      return;
+    }
+    
+    // Collect all farmer details
+    const farmerDetails = {
+      name: document.getElementById('reg-name').value.trim(),
+      farmerId: document.getElementById('reg-farmer-id').value.trim(),
+      village: document.getElementById('reg-village').value.trim(),
+      district: document.getElementById('reg-district').value.trim(),
+      state: document.getElementById('reg-state').value.trim(),
+      pincode: document.getElementById('reg-pincode').value.trim(),
+      landSize: document.getElementById('reg-land-size').value.trim(),
+      landType: document.getElementById('reg-land-type').value.trim(),
+      primaryCrop: document.getElementById('reg-primary-crop').value.trim()
+    };
+    
+    // Validate required fields
+    if (!farmerDetails.name || !farmerDetails.village || !farmerDetails.district || 
+        !farmerDetails.state || !farmerDetails.pincode || !farmerDetails.landSize || 
+        !farmerDetails.landType || !farmerDetails.primaryCrop) {
+      errorEl.textContent = t('error-fill-fields');
+      return;
+    }
+    
+    // Validate pincode format
+    if (!/^\d{6}$/.test(farmerDetails.pincode)) {
+      errorEl.textContent = 'Pincode must be 6 digits';
+      return;
+    }
+    
+    const result = registerFarmer(mobile, password, farmerDetails);
+    if (result.success) {
+      // Auto-login after registration
+      const loginResult = loginFarmer(mobile, password);
+      if (loginResult.success) {
+        location.reload();
+      }
+    } else {
+      errorEl.textContent = result.error;
+    }
+  }
+  
+  function handleLogout() {
+    logout();
+    location.reload();
+  }
+  
+  function updateUserInfo() {
+    const user = getCurrentUser();
+    const userInfoEl = document.getElementById('user-info');
+    const logoutBtnEl = document.getElementById('logout-btn');
+    if (user && user.role === 'farmer') {
+      userInfoEl.textContent = t('logged-in-as') + ' ' + user.mobile;
+      userInfoEl.classList.remove('hidden');
+      logoutBtnEl.classList.remove('hidden');
+    } else {
+      userInfoEl.classList.add('hidden');
+      logoutBtnEl.classList.add('hidden');
+    }
+  }
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', () => {
+    updateUserInfo();
+    document.getElementById('login-pass')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleFarmerLogin();
+    });
+    document.getElementById('reg-pass-confirm')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') handleFarmerRegister();
+    });
+  });
+</script>
+</body>
+</html>
